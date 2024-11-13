@@ -30,29 +30,169 @@ init with {:
 :};
 scan with {: return lexer.next_token(); :};
 
+
 /* Terminals (tokens returned by the scanner). */
-terminal            SEMI, PLUS, MINUS, UMINUS, TIMES, LPAREN, RPAREN, ELSE, VOID,COUT, CIN, DOUBLEQUOTE;
-terminal Integer    NUMBER;        // our scanner provides numbers as integers
+terminal            SEMI, PLUS, MINUS, UMINUS, TIMES, LPAREN, RPAREN, ELSE, VOID, COUT, CIN, DOUBLEQUOTE;
+terminal Integer    NUMBER;        
+// our scanner provides numbers as integers -- this is the INT_LITERAL
 terminal 			LSQUARE, RSQUARE, LBRACKET, RBRACKET, COMMA, EQUAL, NOT, TRUE, FALSE, WHILE, IF;
 terminal			ANDAND, OROR, EQUALEQUAL, DIFFERENT, BIGGER, LESS, LESSEQUAL, BIGGEREQUAL, RETURN;
-terminal 			LSHIFT, RSHIFT, ID;
+// DIFFERENT refers to NOTEQUAL
+terminal 			LSHIFT, RSHIFT, ID, READ, WRITE;
 terminal String		STRING_LITERAL;
 terminal Integer 	INT;
 terminal Boolean 	BOOL;
 terminal DIV;
 
-
-
 /* Non terminals */
+/*
 non terminal            expr_list;
 non terminal Integer    expr;      // used to store evaluated subexpressions
+*/
+non terminal program;
+non terminal varDecl;
+non terminal type;
+non terminal fnDecl;
+non terminal parameters;
+non terminal formalsList;
+non terminal formalDecl;
+non terminal block;
+non terminal declList;
+non terminal stmtList;
+non terminal stmt;
+non terminal exp;
+non terminal atom;
+non terminal fnCallExpr;
+non terminal fnCallStmt;
+non terminal actualList;
+non terminal subscriptExpr;
+non terminal id;
 
 /* Precedences */
 precedence left PLUS, MINUS;
 precedence left TIMES;
 precedence left UMINUS;
 
+
+
 /* The grammar rules */
+
+program
+::= program varDecl                      
+ | program fnDecl						
+ | /* empty */
+ ; 
+ 
+varDecl
+ ::= type id SEMI           		
+ | type id LSQUARE NUMBER RSQUARE SEMI 
+ ;
+ 
+type
+ ::= INT 
+ | BOOL 
+ | VOID 
+ ;
+ 
+fnDecl
+ ::= type id parameters block
+ ;
+ 
+parameters
+ ::= LPAREN RPAREN        	
+ | LPAREN formalsList RPAREN 
+ ;
+ 
+formalsList
+ ::= formalDecl 			
+ | formalsList COMMA formalDecl
+ ;
+ 
+formalDecl
+ ::= type id
+ ;
+
+block
+ ::= LBRACKET declList stmtList RBRACKET 
+ ;
+ 
+declList
+ ::= declList varDecl 					
+ | /* empty */
+ ;
+ 
+stmtList
+ ::= stmtList stmt 						
+ | /* empty */
+ ;
+ 
+stmt
+ ::= CIN READ id SEMI 					
+ | CIN READ id LSQUARE exp RSQUARE SEMI 
+ | COUT WRITE exp SEMI 						
+ | subscriptExpr EQUAL exp SEMI 		
+ | id EQUAL exp SEMI 					
+ | IF LPAREN exp RPAREN block 			
+ | IF LPAREN exp RPAREN block ELSE block
+ | WHILE LPAREN exp RPAREN block 		
+ | RETURN exp SEMI 						
+ | RETURN SEMI 							
+ | fnCallStmt SEMI 						
+ ;
+ 
+
+exp
+ ::= exp PLUS exp 	
+ | exp MINUS exp 	
+ | exp TIMES exp 	
+ | exp DIV exp 		
+ | DIFFERENT exp 	
+ | exp ANDAND exp 	
+ | exp OROR exp 	
+ | exp EQUALEQUAL exp
+ | exp DIFFERENT
+ | exp LESSEQUAL exp 	
+ | exp BIGGEREQUAL exp 	
+ | MINUS atom 		
+ | atom 			
+ ;
+ 
+atom
+ ::= NUMBER 			
+ | STRING_LITERAL 			
+ | TRUE
+ | FALSE
+ | LPAREN exp RPAREN 
+ | fnCallExpr 		
+ | subscriptExpr 	
+ | id 				
+ ;
+ 
+fnCallExpr
+ ::= id LPAREN RPAREN
+ | id LPAREN actualList RPAREN
+ ;
+ 
+fnCallStmt
+ ::= id LPAREN RPAREN
+ | id LPAREN actualList RPAREN
+ ;
+ 
+actualList
+ ::= exp
+ | actualList COMMA exp
+ ;
+ 
+subscriptExpr
+ ::= id LSQUARE exp RSQUARE
+ ;
+ 
+id
+ ::= ID 
+ ;
+
+
+/*
 expr_list ::= expr_list expr:e SEMI         {: System.out.println(e); :}
             | expr:e SEMI                   {: System.out.println(e); :}
             ;
@@ -65,4 +205,4 @@ expr      ::= expr:e1 PLUS  expr:e2         {: RESULT = e1+e2;        :}
              | LPAREN expr:e RPAREN	         {: RESULT = e;           :}
              | NUMBER:n	                     {: RESULT = n;           :}
              ;
-       
+*/    

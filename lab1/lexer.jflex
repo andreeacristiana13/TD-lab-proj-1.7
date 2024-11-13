@@ -108,16 +108,13 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
   ">"          { return symbolFactory.newSymbol("BIGGER", BIGGER); }
   "<"          { return symbolFactory.newSymbol("LESS", LESS); }
   
-  
    //Arithmetic Operators
   "+"          { return symbolFactory.newSymbol("PLUS", PLUS); }
   "-"          { return symbolFactory.newSymbol("MINUS", MINUS); } 
   "*"          { return symbolFactory.newSymbol("TIMES", TIMES); }
   "/"          { return symbolFactory.newSymbol("DIV", DIV); }
   
-  
   //KEYWORDS
-
  "int"          { return symbolFactory.newSymbol("INT", INT); }
  "bool"         { return symbolFactory.newSymbol("BOOL", BOOL); }
  "void"         { return symbolFactory.newSymbol("VOID", VOID); }
@@ -129,6 +126,8 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
  "return"       { return symbolFactory.newSymbol("RETURN", RETURN); }
  "cin"          { return symbolFactory.newSymbol("CIN", CIN); }
  "cout"         { return symbolFactory.newSymbol("COUT", COUT); }
+ "read"         { return symbolFactory.newSymbol("READ", READ); }
+ "write"        { return symbolFactory.newSymbol("WRITE", WRITE); }
   
   {Identifier} { return symbolFactory.newSymbol("ID", ID); }
   {StringLit}  { return symbolFactory.newSymbol("STRING_LITERAL", STRING_LITERAL, yytext()); }
