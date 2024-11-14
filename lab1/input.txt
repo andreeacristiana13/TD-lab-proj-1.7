@@ -1,3 +1,8 @@
-27+15;
-34-15;
-"this is a text"
+int a;
+int c;
+bool d;
+void test_function () {
+	if (a > c) {
+		a = 1000;
+	}
+}

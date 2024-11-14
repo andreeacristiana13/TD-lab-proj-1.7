@@ -8,22 +8,23 @@ package cup.example;
 /** CUP generated interface containing symbol constants. */
 public interface sym {
   /* terminals */
-  public static final int STRING_LITERAL = 38;
+  public static final int STRING_LITERAL = 40;
   public static final int LBRACKET = 17;
   public static final int UMINUS = 5;
   public static final int LPAREN = 7;
   public static final int SEMI = 2;
-  public static final int INT = 39;
+  public static final int INT = 41;
   public static final int LESS = 31;
   public static final int MINUS = 4;
+  public static final int WRITE = 39;
   public static final int RPAREN = 8;
   public static final int OROR = 27;
   public static final int NOT = 21;
   public static final int LESSEQUAL = 32;
-  public static final int BOOL = 40;
+  public static final int BOOL = 42;
   public static final int COMMA = 19;
   public static final int EQUALEQUAL = 28;
-  public static final int DIV = 41;
+  public static final int DIV = 43;
   public static final int ANDAND = 26;
   public static final int DIFFERENT = 29;
   public static final int PLUS = 3;
@@ -44,6 +45,7 @@ public interface sym {
   public static final int DOUBLEQUOTE = 13;
   public static final int COUT = 11;
   public static final int LSQUARE = 15;
+  public static final int READ = 38;
   public static final int RSQUARE = 16;
   public static final int WHILE = 24;
   public static final int BIGGEREQUAL = 33;
@@ -89,6 +91,8 @@ public interface sym {
   "LSHIFT",
   "RSHIFT",
   "ID",
+  "READ",
+  "WRITE",
   "STRING_LITERAL",
   "INT",
   "BOOL",

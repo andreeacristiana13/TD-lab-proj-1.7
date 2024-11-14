@@ -151,8 +151,10 @@ exp
  | exp OROR exp 	
  | exp EQUALEQUAL exp
  | exp DIFFERENT
+ | exp BIGGER exp
+ | exp LESS exp
  | exp LESSEQUAL exp 	
- | exp BIGGEREQUAL exp 	
+ | exp BIGGEREQUAL exp
  | MINUS atom 		
  | atom 			
  ;
