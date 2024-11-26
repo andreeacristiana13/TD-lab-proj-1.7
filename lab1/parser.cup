@@ -78,119 +78,119 @@ precedence left UMINUS;
 /* The grammar rules */
 
 program
-::= program varDecl                      
- | program fnDecl						
+::= program:p varDecl:vd				{:	System.out.println("Program with variable declaration.");	:}                      
+ | program:p fnDecl:fd					{:	System.out.println("Program with function declaration.");	:}						
  | /* empty */
  ; 
  
 varDecl
- ::= type id SEMI           		
- | type id LSQUARE NUMBER RSQUARE SEMI 
+ ::= type:t id:identifier SEMI						{:	System.out.println("Variable declaration with type and id ending with ; ");		:}           		
+ | type:t id:identifier LSQUARE NUMBER RSQUARE SEMI	{:	System.out.println("Variable declaration with type and id ending with [nr]; ");	:} 
  ;
  
 type
- ::= INT 
- | BOOL 
- | VOID 
+ ::= INT								{:	System.out.println("Type INT.");	:} 
+ | BOOL 								{:	System.out.println("Type BOOL.");	:} 
+ | VOID									{:	System.out.println("Type VOID.");	:}  
  ;
  
 fnDecl
- ::= type id parameters block
+ ::= type:t id:identifier parameters:param block:blk	{:	System.out.println("Function declaration.");:} 
  ;
  
 parameters
- ::= LPAREN RPAREN        	
- | LPAREN formalsList RPAREN 
+ ::= LPAREN RPAREN						{:	System.out.println("Parameters []");						:}         	
+ | LPAREN formalsList:fl RPAREN			{:	System.out.println("Parameters [formal list]");				:}  
  ;
- 
+
 formalsList
- ::= formalDecl 			
- | formalsList COMMA formalDecl
+ ::= formalDecl:fd						{:	System.out.println("Formal list is formal declaration");	:}  			
+ | formalsList:fl COMMA formalDecl:fd	{:	System.out.println("Formal list , formal declaration");		:} 
  ;
- 
+
 formalDecl
- ::= type id
+ ::= type:t id:identifier				{:	System.out.println("Formal declaration with type id");		:} 
  ;
 
 block
- ::= LBRACKET declList stmtList RBRACKET 
+ ::= LBRACKET declList:dl stmtList:sl RBRACKET	{:	System.out.println("Block with {declaration list statement list}");	:}  
  ;
  
 declList
- ::= declList varDecl 					
+ ::= declList:dl varDecl:vd				{:	System.out.println("Declaration list variable declaration");				:}  					
  | /* empty */
  ;
  
 stmtList
- ::= stmtList stmt 						
+ ::= stmtList:sl stmt:s					{:	System.out.println("Statement list statement");				:}  						
  | /* empty */
  ;
  
 stmt
- ::= CIN READ id SEMI 					
- | CIN READ id LSQUARE exp RSQUARE SEMI 
- | COUT WRITE exp SEMI 						
- | subscriptExpr EQUAL exp SEMI 		
- | id EQUAL exp SEMI 					
- | IF LPAREN exp RPAREN block 			
- | IF LPAREN exp RPAREN block ELSE block
- | WHILE LPAREN exp RPAREN block 		
- | RETURN exp SEMI 						
- | RETURN SEMI 							
- | fnCallStmt SEMI 						
+ ::= CIN READ id:identifier SEMI			{:	System.out.println("Statement says cin read identifier ;");						:}  					
+ | CIN READ id:identifier LSQUARE exp:e RSQUARE SEMI {:	System.out.println("Statement says cin read identifier [exp] ;");		:} 
+ | COUT WRITE exp:e SEMI					{:	System.out.println("Statement says cout write exp ;");							:}  						
+ | subscriptExpr:se EQUAL exp:e SEMI 		{:	System.out.println("Statement says subscriptexpression = expression ;");		:} 
+ | id:identifier EQUAL exp:e SEMI 			{:	System.out.println("Statement says identifier = expression ;");					:} 
+ | IF LPAREN exp:e RPAREN block:b 		{:	System.out.println("Statement says if (expression) block");						:} 	
+ | IF LPAREN exp:e RPAREN block:b ELSE block:b {:	System.out.println("Statement says if (expression) block else block");	:} 
+ | WHILE LPAREN exp:e RPAREN block:b 		{:	System.out.println("Statement says while (expression) block");					:} 
+ | RETURN exp:e SEMI						{:	System.out.println("Statement says return expression ;");						:}  						
+ | RETURN SEMI 								{:	System.out.println("Statement says return ;");									:} 
+ | fnCallStmt:fcs SEMI 						{:	System.out.println("Statement says function call statement ;");					:} 
  ;
  
 
 exp
- ::= exp PLUS exp 	
- | exp MINUS exp 	
- | exp TIMES exp 	
- | exp DIV exp 		
- | DIFFERENT exp 	
- | exp ANDAND exp 	
- | exp OROR exp 	
- | exp EQUALEQUAL exp
- | exp DIFFERENT
- | exp BIGGER exp
- | exp LESS exp
- | exp LESSEQUAL exp 	
- | exp BIGGEREQUAL exp
- | MINUS atom 		
- | atom 			
+ ::= exp:e1 PLUS exp:e2						{:	System.out.println("expression + expression");					:}  	
+ | exp:e1 MINUS exp:e2						{:	System.out.println("expression - expression");					:}  	
+ | exp:e1 TIMES exp:e2						{:	System.out.println("expression x expression");					:} 
+ | exp:e1 DIV exp:e2 						{:	System.out.println("expression div expression");				:} 
+ | DIFFERENT exp:e 							{:	System.out.println("!= expression");							:} 
+ | exp:e1 ANDAND exp:e2 					{:	System.out.println("expression and epression");					:} 
+ | exp:e1 OROR exp:e2 						{:	System.out.println("expression or expression");					:} 
+ | exp:e1 EQUALEQUAL exp:e2					{:	System.out.println("expression == expression");					:} 
+ | exp:e DIFFERENT							{:	System.out.println("expression !=");							:} 
+ | exp:e1 BIGGER exp:e2						{:	System.out.println("expression > expression");					:} 
+ | exp:e1 LESS exp:e2						{:	System.out.println("expression < expression");					:} 
+ | exp:e1 LESSEQUAL exp:e2 					{:	System.out.println("expression <= expression");					:} 
+ | exp:e1 BIGGEREQUAL exp:e2				{:	System.out.println("expression >= expression");					:} 
+ | MINUS atom:a 							{:	System.out.println("- atom");									:} 
+ | atom:a 									{:	System.out.println("atom");										:} 
  ;
  
 atom
- ::= NUMBER 			
- | STRING_LITERAL 			
- | TRUE
- | FALSE
- | LPAREN exp RPAREN 
- | fnCallExpr 		
- | subscriptExpr 	
- | id 				
+ ::= NUMBER 								{:	System.out.println("atom number");								:} 		
+ | STRING_LITERAL 							{:	System.out.println("atom string literal");						:} 
+ | TRUE										{:	System.out.println("atom true");								:} 
+ | FALSE									{:	System.out.println("atom false");								:} 
+ | LPAREN exp:e RPAREN 						{:	System.out.println("atom (expression)");						:} 
+ | fnCallExpr:fce 							{:	System.out.println("atom function call expresasion");			:} 
+ | subscriptExpr:se 						{:	System.out.println("atom subscript expression");				:} 
+ | id:identifier 							{:	System.out.println("atom identifier");							:} 
  ;
  
 fnCallExpr
- ::= id LPAREN RPAREN
- | id LPAREN actualList RPAREN
+ ::= id:identifier LPAREN RPAREN			{:	System.out.println("Function call with identifier ()");				:} 
+ | id:identifier LPAREN actualList:al RPAREN {:	System.out.println("Function call with identifier (actual list)");	:} 
  ;
  
 fnCallStmt
- ::= id LPAREN RPAREN
- | id LPAREN actualList RPAREN
+ ::= id:identifier LPAREN RPAREN			{:	System.out.println("Fct call statement identifier ()");			:} 
+ | id LPAREN actualList RPAREN				{:	System.out.println("Fct call statement (actual list)");			:} 
  ;
  
 actualList
- ::= exp
- | actualList COMMA exp
+ ::= exp:e									{:	System.out.println("expression");								:} 
+ | actualList:al COMMA exp:e				{:	System.out.println("actual list ; expression");					:} 
  ;
  
 subscriptExpr
- ::= id LSQUARE exp RSQUARE
+ ::= id:identifier LSQUARE exp:e RSQUARE	{:	System.out.println("identifier (expression)");	:} 
  ;
  
 id
- ::= ID 
+ ::= ID 									{:	System.out.println("identifier");				:} 
  ;
 
 
