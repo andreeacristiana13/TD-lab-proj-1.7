@@ -1,7 +1,4 @@
-/*
-   Simple +/-/* expression language; 
-   parser evaluates constant expressions on the fly
-*/
+//parser before asking gpt
 
 package cup.example;
 
@@ -10,9 +7,17 @@ import cup.example.Lexer;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
+import cup.example.TreeNode;
+import cup.example.TreeNodePrinter;
 
 parser code {:
   protected Lexer lexer;
+  protected TreeNode root = new TreeNode("Program");
+
+public TreeNode getParTreeRoot()
+{
+	return root;
+}
 :}
 
 /* define how to connect to the scanner! */
@@ -30,181 +35,404 @@ init with {:
 :};
 scan with {: return lexer.next_token(); :};
 
-
 /* Terminals (tokens returned by the scanner). */
-terminal            SEMI, PLUS, MINUS, UMINUS, TIMES, LPAREN, RPAREN, ELSE, VOID, COUT, CIN, DOUBLEQUOTE;
-terminal Integer    NUMBER;        
-// our scanner provides numbers as integers -- this is the INT_LITERAL
-terminal 			LSQUARE, RSQUARE, LBRACKET, RBRACKET, COMMA, EQUAL, NOT, TRUE, FALSE, WHILE, IF;
-terminal			ANDAND, OROR, EQUALEQUAL, DIFFERENT, BIGGER, LESS, LESSEQUAL, BIGGEREQUAL, RETURN;
-// DIFFERENT refers to NOTEQUAL
-terminal 			LSHIFT, RSHIFT, ID, READ, WRITE;
-terminal String		STRING_LITERAL;
-terminal Integer 	INT;
-terminal Boolean 	BOOL;
-terminal DIV;
+terminal 			DOUBLEQUOTE, LSHIFT, RSHIFT;
+terminal            SEMI, PLUS, MINUS, UMINUS, TIMES, LPAREN, RPAREN;
+terminal Integer    NUMBER;        // our scanner provides numbers as integers
+terminal            INT, BOOL, VOID, TRUE, FALSE, IF;
+terminal            ELSE, WHILE, RETURN, CIN, COUT;
+terminal            LBRACE, RBRACE, LBRACKET;
+terminal            RBRACKET, COMMA, EQUAL, DIVIDE, NOT, ANDAND;
+terminal            OROR, EQEQ, NOTEQ, LESS, GREATER, LESSEQ, GREATEREQ;
+terminal            STRINGLITERAL;
+terminal            READ, WRITE;
+terminal String     ID;
 
 /* Non terminals */
-/*
-non terminal            expr_list;
-non terminal Integer    expr;      // used to store evaluated subexpressions
-*/
-non terminal program;
-non terminal varDecl;
-non terminal type;
-non terminal fnDecl;
-non terminal parameters;
-non terminal formalsList;
-non terminal formalDecl;
-non terminal block;
-non terminal declList;
-non terminal stmtList;
-non terminal stmt;
-non terminal exp;
-non terminal atom;
-non terminal fnCallExpr;
-non terminal fnCallStmt;
-non terminal actualList;
-non terminal subscriptExpr;
-non terminal id;
+non terminal TreeNode    program, varDecl, fnDecl, type, parameters, formalsList;
+non terminal TreeNode    formalDecl, block, declList, stmtList, stmt;
+non terminal TreeNode    fnCallStmt, exp, atom, fnCallExpr, subscriptExpr, id;
+non terminal TreeNode    actualList;
 
 /* Precedences */
 precedence left PLUS, MINUS;
-precedence left TIMES;
-precedence left UMINUS;
+precedence left TIMES, DIVIDE;
+precedence left UMINUS, NOT;
+precedence left OROR, ANDAND;
 
-
-
-/* The grammar rules */
-
-program
-::= program:p varDecl:vd				{:	System.out.println("Program with variable declaration.");	:}                      
- | program:p fnDecl:fd					{:	System.out.println("Program with function declaration.");	:}						
- | /* empty */
- ; 
- 
-varDecl
- ::= type:t id:identifier SEMI						{:	System.out.println("Variable declaration with type and id ending with ; ");		:}           		
- | type:t id:identifier LSQUARE NUMBER RSQUARE SEMI	{:	System.out.println("Variable declaration with type and id ending with [nr]; ");	:} 
- ;
- 
-type
- ::= INT								{:	System.out.println("Type INT.");	:} 
- | BOOL 								{:	System.out.println("Type BOOL.");	:} 
- | VOID									{:	System.out.println("Type VOID.");	:}  
- ;
- 
-fnDecl
- ::= type:t id:identifier parameters:param block:blk	{:	System.out.println("Function declaration.");:} 
- ;
- 
-parameters
- ::= LPAREN RPAREN						{:	System.out.println("Parameters []");						:}         	
- | LPAREN formalsList:fl RPAREN			{:	System.out.println("Parameters [formal list]");				:}  
- ;
-
-formalsList
- ::= formalDecl:fd						{:	System.out.println("Formal list is formal declaration");	:}  			
- | formalsList:fl COMMA formalDecl:fd	{:	System.out.println("Formal list , formal declaration");		:} 
- ;
-
-formalDecl
- ::= type:t id:identifier				{:	System.out.println("Formal declaration with type id");		:} 
- ;
-
-block
- ::= LBRACKET declList:dl stmtList:sl RBRACKET	{:	System.out.println("Block with {declaration list statement list}");	:}  
- ;
- 
-declList
- ::= declList:dl varDecl:vd				{:	System.out.println("Declaration list variable declaration");				:}  					
- | /* empty */
- ;
- 
-stmtList
- ::= stmtList:sl stmt:s					{:	System.out.println("Statement list statement");				:}  						
- | /* empty */
- ;
- 
-stmt
- ::= CIN READ id:identifier SEMI			{:	System.out.println("Statement says cin read identifier ;");						:}  					
- | CIN READ id:identifier LSQUARE exp:e RSQUARE SEMI {:	System.out.println("Statement says cin read identifier [exp] ;");		:} 
- | COUT WRITE exp:e SEMI					{:	System.out.println("Statement says cout write exp ;");							:}  						
- | subscriptExpr:se EQUAL exp:e SEMI 		{:	System.out.println("Statement says subscriptexpression = expression ;");		:} 
- | id:identifier EQUAL exp:e SEMI 			{:	System.out.println("Statement says identifier = expression ;");					:} 
- | IF LPAREN exp:e RPAREN block:b 		{:	System.out.println("Statement says if (expression) block");						:} 	
- | IF LPAREN exp:e RPAREN block:b ELSE block:b {:	System.out.println("Statement says if (expression) block else block");	:} 
- | WHILE LPAREN exp:e RPAREN block:b 		{:	System.out.println("Statement says while (expression) block");					:} 
- | RETURN exp:e SEMI						{:	System.out.println("Statement says return expression ;");						:}  						
- | RETURN SEMI 								{:	System.out.println("Statement says return ;");									:} 
- | fnCallStmt:fcs SEMI 						{:	System.out.println("Statement says function call statement ;");					:} 
- ;
- 
-
-exp
- ::= exp:e1 PLUS exp:e2						{:	System.out.println("expression + expression");					:}  	
- | exp:e1 MINUS exp:e2						{:	System.out.println("expression - expression");					:}  	
- | exp:e1 TIMES exp:e2						{:	System.out.println("expression x expression");					:} 
- | exp:e1 DIV exp:e2 						{:	System.out.println("expression div expression");				:} 
- | DIFFERENT exp:e 							{:	System.out.println("!= expression");							:} 
- | exp:e1 ANDAND exp:e2 					{:	System.out.println("expression and epression");					:} 
- | exp:e1 OROR exp:e2 						{:	System.out.println("expression or expression");					:} 
- | exp:e1 EQUALEQUAL exp:e2					{:	System.out.println("expression == expression");					:} 
- | exp:e DIFFERENT							{:	System.out.println("expression !=");							:} 
- | exp:e1 BIGGER exp:e2						{:	System.out.println("expression > expression");					:} 
- | exp:e1 LESS exp:e2						{:	System.out.println("expression < expression");					:} 
- | exp:e1 LESSEQUAL exp:e2 					{:	System.out.println("expression <= expression");					:} 
- | exp:e1 BIGGEREQUAL exp:e2				{:	System.out.println("expression >= expression");					:} 
- | MINUS atom:a 							{:	System.out.println("- atom");									:} 
- | atom:a 									{:	System.out.println("atom");										:} 
- ;
- 
-atom
- ::= NUMBER 								{:	System.out.println("atom number");								:} 		
- | STRING_LITERAL 							{:	System.out.println("atom string literal");						:} 
- | TRUE										{:	System.out.println("atom true");								:} 
- | FALSE									{:	System.out.println("atom false");								:} 
- | LPAREN exp:e RPAREN 						{:	System.out.println("atom (expression)");						:} 
- | fnCallExpr:fce 							{:	System.out.println("atom function call expresasion");			:} 
- | subscriptExpr:se 						{:	System.out.println("atom subscript expression");				:} 
- | id:identifier 							{:	System.out.println("atom identifier");							:} 
- ;
- 
-fnCallExpr
- ::= id:identifier LPAREN RPAREN			{:	System.out.println("Function call with identifier ()");				:} 
- | id:identifier LPAREN actualList:al RPAREN {:	System.out.println("Function call with identifier (actual list)");	:} 
- ;
- 
-fnCallStmt
- ::= id:identifier LPAREN RPAREN			{:	System.out.println("Fct call statement identifier ()");			:} 
- | id LPAREN actualList RPAREN				{:	System.out.println("Fct call statement (actual list)");			:} 
- ;
- 
-actualList
- ::= exp:e									{:	System.out.println("expression");								:} 
- | actualList:al COMMA exp:e				{:	System.out.println("actual list ; expression");					:} 
- ;
- 
-subscriptExpr
- ::= id:identifier LSQUARE exp:e RSQUARE	{:	System.out.println("identifier (expression)");	:} 
- ;
- 
-id
- ::= ID 									{:	System.out.println("identifier");				:} 
- ;
-
-
-/*
-expr_list ::= expr_list expr:e SEMI         {: System.out.println(e); :}
-            | expr:e SEMI                   {: System.out.println(e); :}
-            ;
-            
-expr      ::= expr:e1 PLUS  expr:e2         {: RESULT = e1+e2;        :}
-             | expr:e1 MINUS expr:e2        {: RESULT = e1-e2;        :}
-             | expr:e1 TIMES expr:e2        {: RESULT = e1*e2;        :}
-             | MINUS expr:e                 {: RESULT = -e;           :}
-             %prec UMINUS
-             | LPAREN expr:e RPAREN	         {: RESULT = e;           :}
-             | NUMBER:n	                     {: RESULT = n;           :}
+program ::= program:p varDecl:v
+              {: System.out.println("Parsed program with varDecl.");
+				 p.addChild(v);
+				 RESULT = p;
+			  :}
+          | program:p fnDecl:fd
+              {: System.out.println("Parsed program with fnDecl.");
+				 p.addChild(fd);
+				 RESULT = p;
+			  :}
+          | /* empty */
+              {: System.out.println("Parsed empty program.");
+				 TreeNode node = new TreeNode("program");
+				 RESULT = node;
+			  :}
+          ;
+    
+varDecl ::=  type:t id:i1 SEMI
+              {: System.out.println("Parsed varDecl.");
+				  TreeNode node = new TreeNode("varDecl");
+                  node.addChild(t);
+                  node.addChild(i1);
+                  RESULT = node;
+		      :}
+          | type:t id:i2 LBRACKET NUMBER:n RBRACKET SEMI
+              {: System.out.println("Parsed array varDecl.");
+			     TreeNode node = new TreeNode("arrayVarDecl");
+                 node.addChild(t);
+                 node.addChild(i2);
+                 node.addChild(new TreeNode("size: " + n.toString()));
+                 RESULT = node;
+			  :}
+          ;
+    
+type ::= INT
+              {: System.out.println("Parsed type INT.");
+				 RESULT = new TreeNode("INT");
+			   :}
+      | BOOL
+              {: System.out.println("Parsed type BOOL.");
+				 RESULT = new TreeNode("BOOL"); :}
+      | VOID
+              {: System.out.println("Parsed type VOID.");
+ 				 RESULT = new TreeNode("VOID");
+			  :}
+      ;
+    
+fnDecl ::= type:t id:i6 parameters:p block:b
+              {: System.out.println("Parsed fnDecl.");
+				  TreeNode node = new TreeNode("fnDecl");
+                  node.addChild(t);
+                  node.addChild(i6);
+                  node.addChild(p);
+                  node.addChild(b);
+                  RESULT = node; :}
+          ;
+    
+parameters ::= LPAREN RPAREN
+                  {: System.out.println("Parsed empty parameters.");
+					 RESULT = new TreeNode("parameters_empty");
+				  :}
+              | LPAREN formalsList:f RPAREN
+                  {: System.out.println("Parsed parameters with formalsList.");
+					 TreeNode node = new TreeNode("parameters");
+                     node.addChild(f);
+                     RESULT = node;
+				  :}
+              ;
+    
+formalsList ::= formalDecl:f
+                  {: System.out.println("Parsed formalsList with single formalDecl.");
+					 TreeNode node = new TreeNode("formalsList");
+                     node.addChild(f);
+                     RESULT = node;
+				  :}
+              | formalsList:fl COMMA formalDecl:f
+                  {: System.out.println("Parsed formalsList with multiple formalDecls.");
+					 fl.addChild(f);
+                     RESULT = fl;
+				  :}
+              ;
+    
+formalDecl ::= type:t id:i
+                  {: System.out.println("Parsed formalDecl.");
+					 TreeNode node = new TreeNode("formalDecl");
+                     node.addChild(t);
+                     node.addChild(i);
+                     RESULT = node; :}
+              ;
+    
+block ::= LBRACE declList:d stmtList:s RBRACE
+              {: System.out.println("Parsed block.");
+				 TreeNode node = new TreeNode("block");
+                  node.addChild(d);
+                  node.addChild(s);
+                  RESULT = node;
+			  :}
+          ;
+    
+declList ::= declList:dl varDecl:v
+                  {: System.out.println("Parsed declList with varDecl.");
+					 dl.addChild(v);
+                     RESULT = dl;
+				   :}
+           | /* empty */
+                  {: System.out.println("Parsed empty declList.");
+					 RESULT = new TreeNode("declList_empty");
+				  :}
+           ;
+    
+stmtList ::= stmtList:sl stmt:s
+                  {: System.out.println("Parsed stmtList with stmt.");
+					 sl.addChild(s);
+                     RESULT = sl; 
+				  :}
+          | /* empty */
+                  {: System.out.println("Parsed empty stmtList.");
+					 RESULT = new TreeNode("stmtList_empty");
+				  :}
+          ;
+    
+stmt ::= CIN READ id:i SEMI
+              {: System.out.println("Parsed CIN READ stmt.");
+				 TreeNode node = new TreeNode("cinReadStmt");
+                 node.addChild(i);
+                 RESULT = node; 
+			  :}
+      | CIN READ id:i8 LBRACKET exp:e RBRACKET SEMI
+              {: System.out.println("Parsed CIN READ array stmt.");
+				 TreeNode node = new TreeNode("cinReadStmt");
+                 node.addChild(i8);
+				 node.addChild(e);
+                 RESULT = node;
+			  :}
+      | COUT WRITE exp:e SEMI
+              {: System.out.println("Parsed COUT WRITE stmt.");
+				 TreeNode node = new TreeNode("coutWriteStmt");
+				 node.addChild(e);
+                 RESULT = node; 
+			  :}
+      | subscriptExpr:se EQUAL exp:e SEMI
+              {: System.out.println("Parsed subscript assignment stmt.");
+				 TreeNode node = new TreeNode("subscriptExpr");
+				 node.addChild(se);
+				 node.addChild(e);
+				 RESULT = node;
+		      :}
+      | id:i EQUAL exp:e SEMI
+              {: System.out.println("Parsed simple assignment stmt.");
+				 TreeNode node = new TreeNode("equalStmt");
+                  node.addChild(new TreeNode(i.toString()));
+                  node.addChild(e);
+                  RESULT = node;
+			  :}
+      | IF LPAREN exp:e RPAREN block:b
+              {: System.out.println("Parsed IF stmt without ELSE.");
+				 TreeNode node = new TreeNode("ifStmt");
+                  node.addChild(e); 
+                  node.addChild(b);  
+                  RESULT = node; 
+			  :}
+      | IF LPAREN exp:e RPAREN block:b2 ELSE block:b3
+              {: System.out.println("Parsed IF stmt with ELSE.");
+				 TreeNode node = new TreeNode("ifStmt");
+                  node.addChild(e);  
+                  node.addChild(b2);  
+                  RESULT = node;
+			  :}
+      | WHILE LPAREN exp:e RPAREN block:b4
+              {: System.out.println("Parsed WHILE stmt.");
+				 TreeNode node = new TreeNode("whileStmt");
+                  node.addChild(e);  
+                  node.addChild(b4);  
+                  RESULT = node; :}
+      | RETURN exp:e SEMI
+              {: System.out.println("Parsed RETURN stmt with expression.");
+				 TreeNode node = new TreeNode("return");
+                  node.addChild(e);   
+                  RESULT = node; :}
+      | RETURN SEMI
+              {: System.out.println("Parsed RETURN stmt without expression.");
+				 TreeNode node = new TreeNode("returnStmt");
+                 RESULT = node;
+			  :}
+      | fnCallStmt:fc SEMI
+              {: System.out.println("Parsed function call stmt.");
+				 TreeNode node = new TreeNode("fnCallStmt");
+				 node.addChild(fc);
+                 RESULT = node; :}
+      ;
+    
+exp ::= exp:e1 PLUS exp:e2
+              {: System.out.println("Parsed addition expression.");
+				 TreeNode node = new TreeNode("PLUS");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node;
+			  :} 
+    | exp:e1 MINUS exp:e2
+              {: System.out.println("Parsed subtraction expression.");
+				 TreeNode node = new TreeNode("MINUS");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node;
+			  :}
+    | exp:e1 TIMES exp:e2
+              {: System.out.println("Parsed multiplication expression.");
+				 TreeNode node = new TreeNode("TIMES");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node;	
+			  :}
+    | exp:e1 DIVIDE exp:e2
+              {: System.out.println("Parsed division expression.");
+			     TreeNode node = new TreeNode("DIVIDE");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node;
+			  :}
+    | NOT exp:e
+              {: System.out.println("Parsed NOT expression.");
+				 TreeNode node = new TreeNode("NOT");
+				 node.addChild(e);
+                 RESULT = node;
+			  :}
+    | exp:e1 ANDAND exp:e2
+              {: System.out.println("Parsed ANDAND expression.");
+				 TreeNode node = new TreeNode("ANDAND");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node; 
+			  :}
+    | exp:e1 OROR exp:e2
+              {: System.out.println("Parsed OROR expression.");
+				 TreeNode node = new TreeNode("OROR");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node; :}
+    | exp:e1 EQEQ exp:e2
+              {: System.out.println("Parsed EQEQ expression.");
+				 TreeNode node = new TreeNode("EQEQ");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node;:}
+    | exp:e1 NOTEQ exp:e2
+              {: System.out.println("Parsed NOTEQ expression.");
+				 TreeNode node = new TreeNode("NOTEQ");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node; :}
+    | exp:e1 LESS exp:e2
+              {: System.out.println("Parsed LESS expression.");
+				 TreeNode node = new TreeNode("LESS");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node; :}
+    | exp:e1 GREATER exp:e2
+              {: System.out.println("Parsed GREATER expression.");
+				 TreeNode node = new TreeNode("GREATER");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node; :}
+    | exp:e1 LESSEQ exp:e2
+              {: System.out.println("Parsed LESSEQ expression.");
+				 TreeNode node = new TreeNode("LESSEQ");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node;:}
+    | exp:e1 GREATEREQ exp:e2
+              {: System.out.println("Parsed GREATEREQ expression.");
+				 TreeNode node = new TreeNode("GRATEREQ");
+				 node.addChild(e1);
+				 node.addChild(e2);
+                 RESULT = node; :}
+    | MINUS atom:a
+              {: System.out.println("Parsed unary minus expression.");
+				 TreeNode node = new TreeNode("MINUS");
+				 node.addChild(a);
+                 RESULT = node; :}
+    | atom:a
+              {: System.out.println("Parsed atom expression.");
+				 TreeNode node = new TreeNode("atom");
+				 node.addChild(a);
+                 RESULT = node; :}
+    ;
+    
+atom ::= NUMBER
+              {: System.out.println("Parsed INTLITERAL atom.");
+                  TreeNode node = new TreeNode("INTLITERAL");
+                  RESULT = node; :}
+      | STRINGLITERAL
+              {: System.out.println("Parsed STRINGLITERAL atom.");
+                  TreeNode node = new TreeNode("STRINGLITERAL");
+                  RESULT = node; :}
+      | TRUE
+              {: System.out.println("Parsed TRUE atom.");
+                  TreeNode node = new TreeNode("TRUE");
+                  RESULT = node; :}
+      | FALSE
+              {: System.out.println("Parsed FALSE atom.");
+                  TreeNode node = new TreeNode("FALSE");
+                  RESULT = node; :}
+      | LPAREN exp:e RPAREN
+              {: System.out.println("Parsed parenthesized expression.");
+                  TreeNode node = new TreeNode("parenthesized");
+                  node.addChild(e);
+                  RESULT = node; :}
+      | fnCallExpr:fc
+              {: System.out.println("Parsed function call expression.");
+                  TreeNode node = new TreeNode("fnCallExpr");
+                  node.addChild(fc);
+                  RESULT = node; :}
+      | subscriptExpr:se
+              {: System.out.println("Parsed subscript expression.");
+                  TreeNode node = new TreeNode("subscriptExpr");
+                  node.addChild(se);
+                  RESULT = node; :}
+      | id
+              {: System.out.println("Parsed identifier atom.");
+                  TreeNode node = new TreeNode("ID");
+                  RESULT = node; :}
+      ;
+   
+fnCallExpr ::= id:i LPAREN RPAREN
+                 {: System.out.println("Parsed function call expression without arguments.");
+                  TreeNode node = new TreeNode("fnCallExpr");
+                  node.addChild(i);
+                  RESULT = node; :}
+             | id:i9 LPAREN actualList:al RPAREN
+                 {: System.out.println("Parsed function call expression with arguments.");
+                  TreeNode node = new TreeNode("fnCallExpr");
+                  node.addChild(i9);
+				  node.addChild(al);
+                  RESULT = node; :}
              ;
-*/    
+    
+fnCallStmt ::= id:i10 LPAREN RPAREN
+                 {: System.out.println("Parsed function call statement without arguments.");
+                  TreeNode node = new TreeNode("fnCallStmt");
+                  node.addChild(i10);
+                  RESULT = node; :}
+             | id:i11 LPAREN actualList:al RPAREN
+                 {: System.out.println("Parsed function call statement with arguments.");
+                  TreeNode node = new TreeNode("fnCallExpr");
+                  node.addChild(i11);
+				  node.addChild(al);
+                  RESULT = node; :}
+             ;
+    
+actualList ::= exp:e
+                 {: System.out.println("Parsed single expression in actualList.");
+                  TreeNode node = new TreeNode("actualList");
+                  node.addChild(e);
+                  RESULT = node; :}
+             | actualList:al COMMA exp:e
+                 {: System.out.println("Parsed multiple expressions in actualList.");
+                  TreeNode node = new TreeNode("actualList");
+                  node.addChild(al);
+				  node.addChild(e);
+                  RESULT = node; :}
+             ;
+ 
+subscriptExpr ::= id:i5 LBRACKET exp:e RBRACKET
+                    {: System.out.println("Parsed subscript expression with indexing.");
+                  TreeNode node = new TreeNode("subscriptExpr");
+                  node.addChild(i5);
+				  node.addChild(e);
+                  RESULT = node; :}
+                ;
+ 
+id ::= ID
+          {: System.out.println("Parsed ID.");
+              TreeNode node = new TreeNode("ID");
+              RESULT = node; :}
+      ;
+
